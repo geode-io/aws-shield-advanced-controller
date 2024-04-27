@@ -1,0 +1,9 @@
+apiVersion: shield.aws.geode.io/v1alpha1
+kind: ProtectionPolicy
+metadata:
+  name: protectionpolicy-sample
+  labels:
+    app.kubernetes.io/name: aws-shield-advanced-controller
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  resources:

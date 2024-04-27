@@ -1,0 +1,9 @@
+apiVersion: shield.aws.geode.io/v1alpha1
+kind: Protection
+metadata:
+  name: protection-sample
+  labels:
+    app.kubernetes.io/name: aws-shield-advanced-controller
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  resourceArn: arn:aws:ec2:us-west-2:1234567890:eip-allocation/eipalloc-aabbccddee11223344

@@ -1,0 +1,27 @@
+# permissions for end users to view protections.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: protection-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: aws-shield-advanced-controller
+    app.kubernetes.io/part-of: aws-shield-advanced-controller
+    app.kubernetes.io/managed-by: kustomize
+  name: protection-viewer-role
+rules:
+- apiGroups:
+  - shield.aws.geode.io
+  resources:
+  - protections
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - shield.aws.geode.io
+  resources:
+  - protections/status
+  verbs:
+  - get

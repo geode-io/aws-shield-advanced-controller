@@ -1,0 +1,5 @@
+## Append samples of your project ##
+resources:
+- shield.aws_v1alpha1_protectionpolicy.yaml
+- shield.aws_v1alpha1_protection.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples

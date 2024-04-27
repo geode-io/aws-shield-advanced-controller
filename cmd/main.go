@@ -33,7 +33,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	shieldawsv1alpha1 "github.com/geode-io/aws-shield-advanced-controller/api/v1alpha1"
+	"github.com/geode-io/aws-shield-advanced-controller/internal/controller"
 	//+kubebuilder:scaffold:imports
+
+	"github.com/geode-io/aws-shield-advanced-controller/internal/aws"
 )
 
 var (
@@ -44,6 +49,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
+	utilruntime.Must(shieldawsv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -118,6 +124,24 @@ func main() {
 		os.Exit(1)
 	}
 
+	shieldManager := aws.NewShieldManager()
+
+	if err = (&controller.ProtectionReconciler{
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		ShieldManager: shieldManager,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Protection")
+		os.Exit(1)
+	}
+	if err = (&controller.ProtectionPolicyReconciler{
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		ShieldManager: shieldManager,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ProtectionPolicy")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

@@ -7,4 +7,23 @@ layout:
 - go.kubebuilder.io/v4
 projectName: aws-shield-advanced-controller
 repo: github.com/geode-io/aws-shield-advanced-controller
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: geode.io
+  group: shield.aws
+  kind: ProtectionPolicy
+  path: github.com/geode-io/aws-shield-advanced-controller/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: geode.io
+  group: shield.aws
+  kind: Protection
+  path: github.com/geode-io/aws-shield-advanced-controller/api/v1alpha1
+  version: v1alpha1
 version: "3"
