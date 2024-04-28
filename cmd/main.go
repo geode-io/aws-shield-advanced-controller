@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
 	"os"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -18,11 +20,13 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+
 	shieldawsv1alpha1 "github.com/geode-io/aws-shield-advanced-controller/api/v1alpha1"
+	"github.com/geode-io/aws-shield-advanced-controller/internal/aws"
+	"github.com/geode-io/aws-shield-advanced-controller/internal/config"
 	"github.com/geode-io/aws-shield-advanced-controller/internal/controller"
 	//+kubebuilder:scaffold:imports
-
-	"github.com/geode-io/aws-shield-advanced-controller/internal/aws"
 )
 
 var (
@@ -38,11 +42,17 @@ func init() {
 }
 
 func main() {
+	var dryRun bool
+	var policyResyncPeriodSeconds int
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
 	var secureMetrics bool
 	var enableHTTP2 bool
+	flag.BoolVar(&dryRun, "dry-run", false,
+		"If set the controller will run in dry-run mode and not make any changes to AWS Shield configurations.")
+	flag.IntVar(&policyResyncPeriodSeconds, "policy-resync-period-seconds", 300,
+		"Policy resync period in seconds")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -87,32 +97,39 @@ func main() {
 			SecureServing: secureMetrics,
 			TLSOpts:       tlsOpts,
 		},
-		WebhookServer:          webhookServer,
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "7e11c515.geode.io",
-		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
-		// when the Manager ends. This requires the binary to immediately end when the
-		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
-		// speeds up voluntary leader transitions as the new leader don't have to wait
-		// LeaseDuration time first.
-		//
-		// In the default scaffold provided, the program ends immediately after
-		// the manager stops, so would be fine to enable this option. However,
-		// if you are doing or is intended to do any operation such as perform cleanups
-		// after the manager stops then its usage might be unsafe.
-		// LeaderElectionReleaseOnCancel: true,
+		WebhookServer:                 webhookServer,
+		HealthProbeBindAddress:        probeAddr,
+		LeaderElection:                enableLeaderElection,
+		LeaderElectionID:              "7e11c515.geode.io",
+		LeaderElectionReleaseOnCancel: true,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	shieldManager := aws.NewShieldManager()
+	config := &config.Config{
+		DryRun:               dryRun,
+		PolicyResyncInterval: time.Duration(policyResyncPeriodSeconds) * time.Second,
+	}
+	if config.DryRun {
+		setupLog.Info("running in dry-run mode")
+	}
+
+	// Initialize a shared AWS config
+	awsCfg, err := awsconfig.LoadDefaultConfig(context.Background())
+	if err != nil {
+		setupLog.Error(err, "unable to create AWS config")
+		os.Exit(1)
+	}
+
+	shieldManager := aws.NewShieldManager(awsCfg)
+	discoveryClient := aws.NewDiscoveryClient(awsCfg)
 
 	if err = (&controller.ProtectionReconciler{
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
+		Config:        config,
 		ShieldManager: shieldManager,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Protection")
@@ -121,7 +138,9 @@ func main() {
 	if err = (&controller.ProtectionPolicyReconciler{
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
+		Config:        config,
 		ShieldManager: shieldManager,
+		Discovery:     discoveryClient,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ProtectionPolicy")
 		os.Exit(1)

@@ -39,13 +39,47 @@ spec:
           spec:
             description: ProtectionPolicySpec defines the desired state of ProtectionPolicy
             properties:
-              foo:
-                description: Foo is an example field of ProtectionPolicy. Edit protectionpolicy_types.go
-                  to remove/update
-                type: string
+              matchRegions:
+                description: MatchRegions is a list of regions to match
+                items:
+                  type: string
+                minItems: 1
+                type: array
+              matchResourceTypes:
+                description: MatchResourceTypes is a list of resource types to match
+                items:
+                  description: ResourceType identifies the type of resource to match
+                  enum:
+                  - cloudfront/distribution
+                  - route53/hostedzone
+                  - globalaccelerator/accelerator
+                  - ec2/eip
+                  - elasticloadbalancing/loadbalancer/app
+                  - elasticloadbalancing/loadbalancer/classic
+                  type: string
+                minItems: 1
+                type: array
+            required:
+            - matchResourceTypes
             type: object
           status:
             description: ProtectionPolicyStatus defines the observed state of ProtectionPolicy
+            properties:
+              protections:
+                items:
+                  description: ProtectionStatus defines the observed state of a protection
+                  properties:
+                    protectionArn:
+                      type: string
+                    resourceArn:
+                      type: string
+                    state:
+                      default: Inactive
+                      description: ProtectionState describes the status of the protection
+                        in AWS Shield Advanced.
+                      type: string
+                  type: object
+                type: array
             type: object
         type: object
     served: true

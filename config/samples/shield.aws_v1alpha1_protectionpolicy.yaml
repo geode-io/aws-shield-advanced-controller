@@ -6,4 +6,13 @@ metadata:
     app.kubernetes.io/name: aws-shield-advanced-controller
     app.kubernetes.io/managed-by: kustomize
 spec:
-  resources:
+  matchResourceTypes:
+    - cloudfront/distribution
+    - route53/hostedzone
+    - globalaccelerator/accelerator
+    - ec2/eip
+    - elasticloadbalancing/loadbalancer/app
+    - elasticloadbalancing/loadbalancer/classic
+  matchRegions:
+    - "us-west-2"
+    - "us-east-1"

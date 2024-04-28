@@ -44,9 +44,11 @@ spec:
                 type: string
             type: object
           status:
-            description: ProtectionStatus defines the observed state of Protection
+            description: ProtectionStatus defines the observed state of a protection
             properties:
               protectionArn:
+                type: string
+              resourceArn:
                 type: string
               state:
                 default: Inactive
