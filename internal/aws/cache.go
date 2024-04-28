@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
-type AWSCache interface {
+type Cache interface {
 	Init(ctx context.Context) error
 	GetAccountId() string
 }
@@ -17,20 +17,20 @@ type STSClient interface {
 	GetCallerIdentity(ctx context.Context, params *sts.GetCallerIdentityInput, optFns ...func(*sts.Options)) (*sts.GetCallerIdentityOutput, error)
 }
 
-type awsCache struct {
+type cache struct {
 	sts STSClient
 
 	AccountId string
 }
 
-func NewAWSCache(cfg aws.Config) AWSCache {
+func NewCache(cfg aws.Config) Cache {
 	stsClient := sts.NewFromConfig(cfg)
-	return &awsCache{
+	return &cache{
 		sts: stsClient,
 	}
 }
 
-func (c *awsCache) Init(ctx context.Context) error {
+func (c *cache) Init(ctx context.Context) error {
 	// init account id
 	if c.AccountId == "" {
 		output, err := c.sts.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
@@ -43,6 +43,6 @@ func (c *awsCache) Init(ctx context.Context) error {
 	return nil
 }
 
-func (c *awsCache) GetAccountId() string {
+func (c *cache) GetAccountId() string {
 	return c.AccountId
 }

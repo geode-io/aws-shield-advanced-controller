@@ -14,12 +14,12 @@ type ELBClient interface {
 
 type elbDiscoveryProvider struct {
 	client ELBClient
-	cache  AWSCache
+	cache  Cache
 }
 
 var _ DiscoveryProvider = &elbDiscoveryProvider{}
 
-func NewELBDiscoveryProvider(cfg aws.Config, cache AWSCache) DiscoveryProvider {
+func NewELBDiscoveryProvider(cfg aws.Config, cache Cache) DiscoveryProvider {
 	return &elbDiscoveryProvider{
 		client: elasticloadbalancing.NewFromConfig(cfg),
 		cache:  cache,

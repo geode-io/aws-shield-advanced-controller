@@ -59,7 +59,7 @@ func (r *ProtectionPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		// Protection is marked for deletion
 		if controllerutil.ContainsFinalizer(policy, FinalizerName) {
 
-			// Delete the protection resources in AWS
+			// Delete all protection resources in AWS
 			if !r.Config.DryRun {
 				protections := policy.Status.Protections
 				for _, protection := range protections {
@@ -123,7 +123,31 @@ func (r *ProtectionPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		})
 	}
 
-	// Write status
+	// Delete managed protections that no longer match the policy
+	managed, err := r.ShieldManager.ListOwnedProtections(ctx)
+	if err != nil {
+		log.Error(err, "Failed to list managed protections")
+		return ctrl.Result{}, err
+	}
+
+	for _, protection := range managed {
+		found := false
+		for _, resource := range resources.Resources {
+			if *protection.ResourceArn == resource.Arn {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			log.Info("Deleting protection that no longer matches policy", "protectionArn", protection.ProtectionArn)
+			err := r.ShieldManager.DeleteProtection(ctx, *protection.ProtectionArn)
+			if err != nil {
+				log.Error(err, "Failed to delete protection", "protectionArn", protection.ProtectionArn)
+				return ctrl.Result{}, err
+			}
+		}
+	}
 	err = r.Status().Update(ctx, policy)
 	if err != nil {
 		log.Error(err, "Failed to update ProtectionPolicy status")

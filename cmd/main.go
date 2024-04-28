@@ -123,8 +123,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	shieldManager := aws.NewShieldManager(awsCfg)
-	discoveryClient := aws.NewDiscoveryClient(awsCfg)
+	awsCache := aws.NewCache(awsCfg)
+	awsCache.Init(context.Background())
+
+	shieldManager := aws.NewShieldManager(awsCfg, awsCache)
+	discoveryClient := aws.NewDiscoveryClient(awsCfg, awsCache)
 
 	if err = (&controller.ProtectionReconciler{
 		Client:        mgr.GetClient(),

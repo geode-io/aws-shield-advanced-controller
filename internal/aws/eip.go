@@ -14,12 +14,12 @@ type EC2Client interface {
 
 type ec2EIPDiscoveryProvider struct {
 	client EC2Client
-	cache  AWSCache
+	cache  Cache
 }
 
 var _ DiscoveryProvider = &ec2EIPDiscoveryProvider{}
 
-func NewEC2EIPDiscoveryProvider(cfg aws.Config, cache AWSCache) DiscoveryProvider {
+func NewEC2EIPDiscoveryProvider(cfg aws.Config, cache Cache) DiscoveryProvider {
 	return &ec2EIPDiscoveryProvider{
 		client: ec2.NewFromConfig(cfg),
 		cache:  cache,

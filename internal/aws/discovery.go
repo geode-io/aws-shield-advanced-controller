@@ -13,14 +13,12 @@ import (
 
 type discoveryClient struct {
 	providers map[string]DiscoveryProvider
-	cache     AWSCache
+	cache     Cache
 }
 
 var _ DiscoveryClient = &discoveryClient{}
 
-func NewDiscoveryClient(cfg aws.Config) DiscoveryClient {
-
-	cache := NewAWSCache(cfg)
+func NewDiscoveryClient(cfg aws.Config, cache Cache) DiscoveryClient {
 
 	// Resource types must match the enum defined in the API
 	providers := map[string]DiscoveryProvider{
@@ -40,8 +38,6 @@ func NewDiscoveryClient(cfg aws.Config) DiscoveryClient {
 
 func (d *discoveryClient) Discover(ctx context.Context, request *DiscoveryRequest) (*DiscoveryResponse, error) {
 	log := log.FromContext(ctx)
-
-	d.cache.Init(ctx)
 
 	p := pool.
 		NewWithResults[[]DiscoveredResource]().
