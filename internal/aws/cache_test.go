@@ -27,7 +27,8 @@ func TestAWSCache_Init(t *testing.T) {
 	ctx := context.Background()
 	accountID := "123456789012"
 
-	mockSTS.On("GetCallerIdentity", ctx, &sts.GetCallerIdentityInput{}, mock.Anything).
+	mockSTS.
+		On("GetCallerIdentity", ctx, &sts.GetCallerIdentityInput{}, mock.Anything).
 		Return(&sts.GetCallerIdentityOutput{Account: &accountID}, nil)
 
 	err := cache.Init(ctx)

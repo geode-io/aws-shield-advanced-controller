@@ -1,0 +1,77 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "aws-shield-advanced-controller.fullname" . }}-manager-role
+  labels:
+  {{- include "aws-shield-advanced-controller.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - shield.aws.geode.io
+  resources:
+  - protectionpolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - shield.aws.geode.io
+  resources:
+  - protectionpolicies/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - shield.aws.geode.io
+  resources:
+  - protectionpolicies/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - shield.aws.geode.io
+  resources:
+  - protections
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - shield.aws.geode.io
+  resources:
+  - protections/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - shield.aws.geode.io
+  resources:
+  - protections/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "aws-shield-advanced-controller.fullname" . }}-manager-rolebinding
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: aws-shield-advanced-controller
+    app.kubernetes.io/part-of: aws-shield-advanced-controller
+  {{- include "aws-shield-advanced-controller.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: '{{ include "aws-shield-advanced-controller.fullname" . }}-manager-role'
+subjects:
+- kind: ServiceAccount
+  name: '{{ include "aws-shield-advanced-controller.fullname" . }}-controller-manager'
+  namespace: '{{ .Release.Namespace }}'
