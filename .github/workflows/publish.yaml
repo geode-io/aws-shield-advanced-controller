@@ -52,4 +52,3 @@ jobs:
             ${{ steps.meta.outputs.bake-file }}
           targets: default
           push: ${{ github.event_name != 'pull_request' }}
-
