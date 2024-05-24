@@ -2,15 +2,18 @@ name: Publish
 
 on:
   push:
-    branches:
-      - main
     tags:
-      - 'v*'
+      - '*'
   pull_request:
     branches:
       - main
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
+
   container-image:
     runs-on: ubuntu-latest
     steps:
@@ -52,3 +55,18 @@ jobs:
             ${{ steps.meta.outputs.bake-file }}
           targets: default
           push: ${{ github.event_name != 'pull_request' }}
+  
+  helm-chart:
+    needs: container-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Helm package
+        run: helm package charts/aws-shield-advanced-controller
+      
+      - name: Helm push
+        run: |
+          helm registry login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          helm push aws-shield-advanced-controller-*.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
