@@ -8,8 +8,7 @@ controllerManager:
         drop:
         - ALL
     image:
-      repository: controller
-      tag: latest
+      repository: ghcr.io/geode-io/aws-shield-advanced-controller
     resources:
       limits:
         cpu: 500m
@@ -20,4 +19,5 @@ controllerManager:
   replicas: 1
   serviceAccount:
     annotations: {}
+
 kubernetesClusterDomain: cluster.local
